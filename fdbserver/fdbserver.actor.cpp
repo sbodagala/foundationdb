@@ -3,7 +3,7 @@
  *
  * This source file is part of the FoundationDB open source project
  *
- * Copyright 2013-2018 Apple Inc. and the FoundationDB project authors
+ * Copyright 2013-2022 Apple Inc. and the FoundationDB project authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1432,8 +1432,8 @@ private:
 				// parameter
 				knobs.emplace_back(
 				    "page_cache_4k",
-				    format("%ld", ti.get() / 4096 * 4096)); // The cache holds 4K pages, so we can truncate this to the
-				                                            // next smaller multiple of 4K.
+				    format("%lld", ti.get() / 4096 * 4096)); // The cache holds 4K pages, so we can truncate this to the
+				                                             // next smaller multiple of 4K.
 				break;
 			case OPT_BUGGIFY:
 				if (!strcmp(args.OptionArg(), "on"))
@@ -1745,9 +1745,9 @@ int main(int argc, char* argv[]) {
 				} else {
 					fprintf(stderr, "ERROR: Failed to set knob option '%s': %s\n", knobName.c_str(), e.what());
 					TraceEvent(SevError, "FailedToSetKnob")
+					    .error(e)
 					    .detail("Knob", printable(knobName))
-					    .detail("Value", printable(knobValueString))
-					    .error(e);
+					    .detail("Value", printable(knobValueString));
 					throw;
 				}
 			}
@@ -2085,6 +2085,7 @@ int main(int argc, char* argv[]) {
 			                       opts.localities));
 			g_network->run();
 		} else if (role == ServerRole::Test) {
+			TraceEvent("NonSimulationTest").detail("TestFile", opts.testFile);
 			setupRunLoopProfiler();
 			auto m = startSystemMonitor(opts.dataFolder, opts.dcId, opts.zoneId, opts.zoneId);
 			f = stopAfter(runTests(
